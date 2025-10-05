@@ -76,15 +76,18 @@ allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
 if allowed_origins_env:
     # Parse comma-separated origins and strip whitespace
     allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
+    logger.info(f"CORS - Using ALLOWED_ORIGINS from environment: {len(allowed_origins)} origins configured")
 else:
     # Default origins including localhost and preview URLs
     allowed_origins = [
         "http://localhost:3000",
         "http://localhost:4000",
+        "https://vscode-internal-25292-beta.beta01.cloud.kavia.ai:3000",
+        "https://vscode-internal-25292-beta.beta01.cloud.kavia.ai:4000",
         "https://vscode-internal-21410-beta.beta01.cloud.kavia.ai:3000",
         "https://vscode-internal-21410-beta.beta01.cloud.kavia.ai:4000"
     ]
-    logger.info("ALLOWED_ORIGINS not set in environment, using default origins")
+    logger.warning("CORS - ALLOWED_ORIGINS not set in environment, using default origins")
 
 # Add CORS middleware with explicit configuration
 app.add_middleware(
@@ -95,7 +98,9 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers including Content-Type, Authorization, etc.
 )
 
-logger.info(f"CORS middleware configured with origins: {allowed_origins}")
+logger.info(f"CORS middleware configured with {len(allowed_origins)} allowed origins")
+for origin in allowed_origins:
+    logger.info(f"  - {origin}")
 
 # PUBLIC_INTERFACE
 @app.get(
@@ -142,6 +147,8 @@ def detailed_health():
         cors_origins = [
             "http://localhost:3000",
             "http://localhost:4000",
+            "https://vscode-internal-25292-beta.beta01.cloud.kavia.ai:3000",
+            "https://vscode-internal-25292-beta.beta01.cloud.kavia.ai:4000",
             "https://vscode-internal-21410-beta.beta01.cloud.kavia.ai:3000",
             "https://vscode-internal-21410-beta.beta01.cloud.kavia.ai:4000"
         ]

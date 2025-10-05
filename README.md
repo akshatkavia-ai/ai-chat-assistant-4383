@@ -54,6 +54,14 @@ uvicorn src.api.main:app --host 0.0.0.0 --port 3001 --reload
 
 The server will start on http://localhost:3001
 
+**Note**: The `--reload` flag enables auto-reload when code changes are detected. For production, remove this flag.
+
+Alternatively, use the restart script:
+```bash
+./restart.sh
+```
+=======
+
 ### 4. Access API Documentation
 Once running, visit:
 - Swagger UI: http://localhost:3001/docs
@@ -138,6 +146,33 @@ See `.env.example` for all required and optional environment variables:
 - The service runs on port 3001 by default
 - Mock responses are provided when Gemini API is not configured
 - Conversation history is currently stored in-memory and will be lost on restart
+
+## Troubleshooting
+
+### CORS Errors
+If you encounter CORS errors like "No 'Access-Control-Allow-Origin' header":
+
+1. **Verify ALLOWED_ORIGINS in .env**: Ensure the frontend URL is listed in the `ALLOWED_ORIGINS` environment variable
+2. **Restart the backend**: Changes to `.env` require a service restart. Kill the process and restart:
+   ```bash
+   pkill -f "uvicorn src.api.main:app"
+   uvicorn src.api.main:app --host 0.0.0.0 --port 3001 --reload
+   ```
+3. **Check logs**: Look for "CORS middleware configured" messages in the startup logs
+4. **Test CORS**: Use curl to verify CORS headers:
+   ```bash
+   curl -i -X OPTIONS https://your-backend-url/conversations \
+     -H "Origin: https://your-frontend-url" \
+     -H "Access-Control-Request-Method: GET"
+   ```
+
+### Verifying CORS Configuration
+Visit `/health` endpoint to see current CORS settings:
+```bash
+curl https://your-backend-url/health
+```
+
+This will show the configured allowed origins, methods, and headers.
 
 ## Deployment Considerations
 - Set `ALLOWED_ORIGINS` to specific frontend URL(s) in production
