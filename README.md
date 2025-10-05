@@ -1,1 +1,3 @@
-# ai-chat-assistant-4383
+# Project Repository
+
+This is the initial README file for the project.
