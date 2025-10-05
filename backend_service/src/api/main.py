@@ -27,6 +27,15 @@ storage_service = StorageService()
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events"""
     logger.info("Starting AI Copilot Backend Service")
+    
+    # Log CORS configuration on startup
+    allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
+    if allowed_origins_env:
+        origins_list = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
+        logger.info(f"CORS - Effective allowed origins: {origins_list}")
+    else:
+        logger.warning("CORS - ALLOWED_ORIGINS not set, using default origins")
+    
     yield
     logger.info("Shutting down AI Copilot Backend Service")
 
@@ -49,21 +58,32 @@ app = FastAPI(
 )
 
 # Configure CORS
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "*")
-if allowed_origins != "*":
-    allowed_origins = [origin.strip() for origin in allowed_origins.split(",")]
-else:
-    allowed_origins = ["*"]
+# Read ALLOWED_ORIGINS from environment and parse it properly
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
 
+if allowed_origins_env:
+    # Parse comma-separated origins and strip whitespace
+    allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
+else:
+    # Default origins including localhost and preview URLs
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://localhost:4000",
+        "https://vscode-internal-21410-beta.beta01.cloud.kavia.ai:3000",
+        "https://vscode-internal-21410-beta.beta01.cloud.kavia.ai:4000"
+    ]
+    logger.info("ALLOWED_ORIGINS not set in environment, using default origins")
+
+# Add CORS middleware with explicit configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=allowed_origins,  # List of exact origins (not wildcard when credentials=True)
+    allow_credentials=True,  # Allow cookies and authorization headers
+    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PUT, DELETE, OPTIONS, etc.)
+    allow_headers=["*"],  # Allow all headers including Content-Type, Authorization, etc.
 )
 
-logger.info(f"CORS configured with allowed origins: {allowed_origins}")
+logger.info(f"CORS middleware configured with origins: {allowed_origins}")
 
 # PUBLIC_INTERFACE
 @app.get(
@@ -100,8 +120,20 @@ def detailed_health():
     Detailed health check endpoint with service status information.
     
     Returns:
-        A dictionary with detailed health status including API configuration
+        A dictionary with detailed health status including API configuration and CORS settings
     """
+    # Get current CORS origins for verification
+    allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
+    if allowed_origins_env:
+        cors_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
+    else:
+        cors_origins = [
+            "http://localhost:3000",
+            "http://localhost:4000",
+            "https://vscode-internal-21410-beta.beta01.cloud.kavia.ai:3000",
+            "https://vscode-internal-21410-beta.beta01.cloud.kavia.ai:4000"
+        ]
+    
     return {
         "status": "healthy",
         "service": "AI Copilot Backend",
@@ -115,6 +147,12 @@ def detailed_health():
                 "type": "in-memory",
                 "note": "TODO: Replace with persistent database"
             }
+        },
+        "cors": {
+            "allowed_origins": cors_origins,
+            "allow_credentials": True,
+            "allow_methods": ["*"],
+            "allow_headers": ["*"]
         }
     }
 
