@@ -372,3 +372,30 @@ async def list_conversations():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list conversations: {str(e)}"
         )
+
+# PUBLIC_INTERFACE
+@app.options("/conversations")
+async def options_conversations():
+    """
+    Explicit OPTIONS handler for /conversations endpoint.
+    Handles CORS preflight requests.
+    """
+    return {"status": "ok"}
+
+# PUBLIC_INTERFACE
+@app.options("/chat")
+async def options_chat():
+    """
+    Explicit OPTIONS handler for /chat endpoint.
+    Handles CORS preflight requests.
+    """
+    return {"status": "ok"}
+
+# PUBLIC_INTERFACE
+@app.options("/history")
+async def options_history():
+    """
+    Explicit OPTIONS handler for /history endpoint.
+    Handles CORS preflight requests.
+    """
+    return {"status": "ok"}
