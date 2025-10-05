@@ -18,20 +18,30 @@ class GeminiService:
     """
     
     def __init__(self):
-        self.api_key = os.getenv("GEMINI_API_KEY")
+        # Read API key with fallback: GEMINI_API_KEY or GOOGLE_GEMINI_API_KEY
+        self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_GEMINI_API_KEY")
         self.model = None
+        
+        # Log which environment variable was used
+        if self.api_key:
+            if os.getenv("GEMINI_API_KEY"):
+                logger.info("Gemini API key detected: Using GEMINI_API_KEY from environment")
+            elif os.getenv("GOOGLE_GEMINI_API_KEY"):
+                logger.info("Gemini API key detected: Using GOOGLE_GEMINI_API_KEY from environment")
+        else:
+            logger.warning("Gemini API key not detected: Neither GEMINI_API_KEY nor GOOGLE_GEMINI_API_KEY found in environment")
         
         if self.api_key and GENAI_AVAILABLE:
             try:
                 genai.configure(api_key=self.api_key)
                 self.model = genai.GenerativeModel('gemini-pro')
-                logger.info("Gemini API initialized successfully")
+                logger.info("Gemini API initialized successfully with real API key")
             except Exception as e:
                 logger.error(f"Failed to initialize Gemini API: {e}")
                 self.model = None
         else:
             if not self.api_key:
-                logger.warning("GEMINI_API_KEY not found in environment. Using mock responses.")
+                logger.warning("Using mock responses: No valid Gemini API key configured")
             if not GENAI_AVAILABLE:
                 logger.warning("google-generativeai package not available. Install with: pip install google-generativeai")
     

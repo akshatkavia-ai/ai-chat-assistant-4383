@@ -28,6 +28,18 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events"""
     logger.info("Starting AI Copilot Backend Service")
     
+    # Log Gemini API key status on startup
+    gemini_key_present = bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_GEMINI_API_KEY"))
+    logger.info(f"Gemini API key present: {'yes' if gemini_key_present else 'no'}")
+    
+    if gemini_key_present:
+        if gemini_service.model:
+            logger.info("Gemini API service: ACTIVE (real API responses enabled)")
+        else:
+            logger.warning("Gemini API service: FAILED (falling back to mock responses)")
+    else:
+        logger.warning("Gemini API service: NOT CONFIGURED (using mock responses)")
+    
     # Log CORS configuration on startup
     allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
     if allowed_origins_env:
